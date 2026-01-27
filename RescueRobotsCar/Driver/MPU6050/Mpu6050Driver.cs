@@ -25,16 +25,64 @@ namespace RescueRobotsCar.Driver.MPU6050
         // Acceleration in mm/(10ms)² (assuming default ±2g range)
         // 1g = 9806.65 mm/s² = 0.980665 mm/(10ms)²
         // Sensitivity: 16384 LSB/g for ±2g range
-        public float AccelXMms2 => (AccelX / 16384.0f) * 0.980665f;
-        public float AccelYMms2 => (AccelY / 16384.0f) * 0.980665f;
-        public float AccelZMms2 => (AccelZ / 16384.0f) * 0.980665f;
+        // Rounded: values between -10 mm/s² and 10 mm/s² (±1 cm/s²) are set to 0
+        public float AccelXMms2
+        {
+            get
+            {
+                float value = (AccelX / 16384.0f) * 0.980665f;
+                return Math.Abs(value) < 10.0f ? 0.0f : value;
+            }
+        }
+
+        public float AccelYMms2
+        {
+            get
+            {
+                float value = (AccelY / 16384.0f) * 0.980665f;
+                return Math.Abs(value) < 10.0f ? 0.0f : value;
+            }
+        }
+
+        public float AccelZMms2
+        {
+            get
+            {
+                float value = (AccelZ / 16384.0f) * 0.980665f;
+                return Math.Abs(value) < 10.0f ? 0.0f : value;
+            }
+        }
 
         // Angular velocity in degrees per (10ms) (assuming default ±250°/s range)
         // Sensitivity: 131 LSB/(°/s) for ±250°/s range
         // Converting to degrees per 10ms: divide by 100
-        public float GyroXDps => GyroX / 13100.0f;
-        public float GyroYDps => GyroY / 13100.0f;
-        public float GyroZDps => GyroZ / 13100.0f;
+        // Rounded: values between -1 and 1 are set to 0
+        public float GyroXDps
+        {
+            get
+            {
+                float value = GyroX / 13100.0f;
+                return Math.Abs(value) < 1.0f ? 0.0f : value;
+            }
+        }
+
+        public float GyroYDps
+        {
+            get
+            {
+                float value = GyroY / 13100.0f;
+                return Math.Abs(value) < 1.0f ? 0.0f : value;
+            }
+        }
+
+        public float GyroZDps
+        {
+            get
+            {
+                float value = GyroZ / 13100.0f;
+                return Math.Abs(value) < 1.0f ? 0.0f : value;
+            }
+        }
 
         // Pitch and Roll angles in degrees calculated from accelerometer data
         // Pitch: rotation around Y-axis (forward/backward tilt)
