@@ -1,113 +1,122 @@
-﻿using System.Device.Gpio;
+﻿using Iot.Device.Card.Mifare;
+using Iot.Device.Mfrc522;
+using Iot.Device.Rfid;
+using System.Device.Gpio;
 using System.Device.Spi;
 
 namespace RescueRobotsCar.Driver.RFID
 {
     public class RFIDRC522Config
     {
-        public readonly int BusID = 0x68;
-        public readonly int ChipSelectLine = 1;
-        public readonly int ResetPin = 2;
+        public readonly int BusID = 0;
+        public readonly int ChipSelectLine = 0;
+        public readonly int ResetPin = 25;
     }
 
     public class RFIDRC522Driver
     {
         private readonly RFIDRC522Config _config = new RFIDRC522Config();
 
-        public bool CardPresent => IsCardPresent();
+        public bool CardPresent => _rfid.IsCardPresent(new byte[2]);
+        public MfRc522 Rfid => _rfid;
 
         private SpiDevice _spi;
         private GpioController _gpio;
         private int _resetPin;
+        private MfRc522 _rfid;
 
         public RFIDRC522Driver()
         {
-            this._resetPin = _config.ResetPin;
+            _resetPin = _config.ResetPin;
 
             _gpio = new GpioController();
-            _gpio.OpenPin(_resetPin, PinMode.Output);
-            _gpio.Write(_resetPin, PinValue.High);
 
+            // SPI erst DANACH initialisieren
             _spi = SpiDevice.Create(new SpiConnectionSettings(_config.BusID, _config.ChipSelectLine)
             {
-                ClockFrequency = 1_000_000,
+                ClockFrequency = 1_000_000,  // Erstmal langsamer (1MHz statt 10MHz)!
                 Mode = SpiMode.Mode0
             });
 
-            Init();
+            _rfid = new MfRc522(_spi, _resetPin, _gpio);
         }
 
-        private void Init()
+        public async Task Init()
         {
-            WriteRegister(0x01, 0x0F); // Soft Reset
-            Thread.Sleep(50);
+            // RESET: Low → 50ms warten → High → 50ms warten
+            _gpio.OpenPin(_resetPin, PinMode.Output);
+            _gpio.Write(_resetPin, PinValue.Low);
+            await Task.Delay(50);
+            _gpio.Write(_resetPin, PinValue.High);
+            await Task.Delay(50);
 
-            WriteRegister(0x2A, 0x8D); // TMode
-            WriteRegister(0x2B, 0x3E); // TPrescaler
-            WriteRegister(0x2D, 30);   // TReload low
-            WriteRegister(0x2C, 0);    // TReload high
+            // PCD_Init() aufrufen!
+            _rfid.SoftReset();
 
-            WriteRegister(0x15, 0x40); // TxASK
-            WriteRegister(0x11, 0x3D); // Mode
+            await Task.Delay(50);
 
-            // Antenne einschalten
-            byte val = ReadRegister(0x14);
-            WriteRegister(0x14, (byte)(val | 0x03));
+            Console.WriteLine("RFID RC522 initialisiert");
+        }
+    }
+
+    public class RFIDReader : BackgroundService
+    {
+        private readonly RFIDRC522Driver _driver;
+        
+        // Driver über DI injizieren
+        public RFIDReader(RFIDRC522Driver driver)
+        {
+            _driver = driver;
         }
 
-        private void WriteRegister(byte reg, byte value)
+        protected override async Task ExecuteAsync(CancellationToken ct)
         {
-            byte[] buffer = {
-                (byte)((reg << 1) & 0x7E),
-                value
-            };
-            _spi.Write(buffer);
-        }
+            await _driver.Init();
 
-        private byte ReadRegister(byte reg)
-        {
-            byte[] writeBuffer = {
-                (byte)(((reg << 1) & 0x7E) | 0x80),
-                0x00
-            };
+            Console.WriteLine("🔍 RFID Scan STARTED - KARTE AUFLEGEN!");
 
-            byte[] readBuffer = new byte[2];
-            _spi.TransferFullDuplex(writeBuffer, readBuffer);
+            while (!ct.IsCancellationRequested)
+            {
+                try
+                {
+                    bool cardFound = _driver.Rfid.ListenToCardIso14443TypeA(
+                        out Data106kbpsTypeA card,
+                        TimeSpan.FromMilliseconds(300)
+                    );
 
-            return readBuffer[1];
-        }
+                    if (cardFound)
+                    {
+                        Console.WriteLine($"✅ KARTE! UID: {BitConverter.ToString(card.NfcId)}");
 
-        public bool IsCardPresent()
-        {
-            WriteRegister(0x0D, 0x07); // BitFramingReg
-            WriteRegister(0x09, 0x26); // REQA
+                        var mifare = new MifareCard(_driver.Rfid, card.TargetNumber);
+                        mifare.SerialNumber = card.NfcId;
+                        mifare.Capacity = MifareCardCapacity.Mifare1K;
+                        mifare.BlockNumber = 4;
+                        mifare.KeyA = new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+                        mifare.Command = MifareCardCommand.AuthenticationA;
 
-            WriteRegister(0x01, 0x0C); // Transceive
-            WriteRegister(0x0D, 0x87); // StartSend
+                        if (mifare.RunMifareCardCommand() >= 0)
+                        {
+                            mifare.Command = MifareCardCommand.Read16Bytes;
+                            if (mifare.RunMifareCardCommand() >= 0 && mifare.Data != null)
+                            {
+                                string text = System.Text.Encoding.ASCII.GetString(mifare.Data).TrimEnd('\0');
+                                Console.WriteLine($"✅ BLOCK 4: \"{text}\"");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Console.Write(".");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"\n❌ ERROR: {ex.Message}");
+                }
 
-            Thread.Sleep(5);
-
-            byte irq = ReadRegister(0x04);
-            return (irq & 0x30) != 0;
-        }
-
-        public byte[] ReadUid()
-        {
-            WriteRegister(0x09, 0x93); // SELECT
-            WriteRegister(0x09, 0x20);
-
-            WriteRegister(0x01, 0x0C);
-            WriteRegister(0x0D, 0x87);
-
-            Thread.Sleep(5);
-
-            byte length = ReadRegister(0x0A);
-            byte[] uid = new byte[length];
-
-            for (int i = 0; i < length; i++)
-                uid[i] = ReadRegister(0x09);
-
-            return uid;
+                await Task.Delay(250, ct);
+            }
         }
     }
 }

@@ -97,7 +97,7 @@ namespace RescueRobotsCar.Driver.MPU6050
         }
     }
 
-    public class Mpu6050Driver : IHostedService, IDisposable
+    public class Mpu6050Driver : BackgroundService
     {
         private I2cConnectionSettings _i2cSettings;
         private I2cDevice _i2cDevice;
@@ -137,7 +137,7 @@ namespace RescueRobotsCar.Driver.MPU6050
             return data;
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             Initialize();
 
@@ -145,19 +145,8 @@ namespace RescueRobotsCar.Driver.MPU6050
             {
                 await Task.Delay(10, cancellationToken);
                 Data = ReadAll();
-                _logger.Log($"MPU6050 Data: {Data}", Logger.Severity.Info);
+                //_logger.Log($"MPU6050 Data: {Data}", Logger.Severity.Info);
             }
-        }
-
-        public async Task StopAsync(CancellationToken cancellationToken)
-        {
-            // Cleanup if necessary
-            await Task.CompletedTask;
-        }
-
-        public void Dispose()
-        {
-            _i2cDevice?.Dispose();
         }
     }
 }
