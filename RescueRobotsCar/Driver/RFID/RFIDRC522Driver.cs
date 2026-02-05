@@ -15,6 +15,19 @@ namespace RescueRobotsCar.Driver.RFID
 
     public class RFIDRC522Driver
     {
+        public enum Register : byte
+        {
+            TModeReg = 0x2A,
+            TPrescalerReg = 0x2B,
+            TReloadRegL = 0x2C,
+            TReloadRegH = 0x2D,
+            TxAutoReg = 0x2E,
+            ModeReg = 0x11,
+            TxControlReg = 0x14,
+            RxGainReg = 0x14  // Gain Property nutzt das
+        }
+
+
         private readonly RFIDRC522Config _config = new RFIDRC522Config();
 
         public bool CardPresent => _rfid.IsCardPresent(new byte[2]);
@@ -34,7 +47,7 @@ namespace RescueRobotsCar.Driver.RFID
             // SPI erst DANACH initialisieren
             _spi = SpiDevice.Create(new SpiConnectionSettings(_config.BusID, _config.ChipSelectLine)
             {
-                ClockFrequency = 1_000_000,  // Erstmal langsamer (1MHz statt 10MHz)!
+                ClockFrequency = 400_000,  // Erstmal langsamer (0.4MHz statt 10MHz)!
                 Mode = SpiMode.Mode0
             });
 
@@ -51,12 +64,63 @@ namespace RescueRobotsCar.Driver.RFID
             await Task.Delay(50);
 
             // PCD_Init() aufrufen!
-            _rfid.SoftReset();
+            PcdInit(_spi);
 
             await Task.Delay(50);
 
             Console.WriteLine("RFID RC522 initialisiert");
         }
+
+        public void PcdInit(SpiDevice spi)
+        {
+            // 1. PCD Soft Reset
+            _rfid.SoftReset();
+            Thread.Sleep(50);
+
+            // 2. Timer stoppen + Prescaler setzen (Arduino PCD_Init)
+            WriteSpiRegister(spi, Register.TModeReg, 0x8D);
+            WriteSpiRegister(spi, Register.TPrescalerReg, 0x3E);
+            WriteSpiRegister(spi, Register.TReloadRegL, 30);
+            WriteSpiRegister(spi, Register.TReloadRegH, 0);
+
+            // 3. TX Auto + CRC aktivieren
+            WriteSpiRegister(spi, Register.TxAutoReg, 0x40);
+            WriteSpiRegister(spi, Register.ModeReg, 0x3D);
+
+            // 4. MAX RECEIVER GAIN (48dB)
+
+            // 5. ANTENNENFELD AKTIVIEREN (Tx1+Tx2 ON)
+            byte txControl = ReadSpiRegister(spi, Register.TxControlReg);
+            txControl |= 0x03;  // Bit 0+1 = Tx1, Tx2 ON
+            WriteSpiRegister(spi, Register.TxControlReg, txControl);
+
+            // 6. Timer neu starten
+            WriteSpiRegister(spi, Register.TModeReg, 0x8D);
+
+            Console.WriteLine("✅ PCD_Init() komplett - Antenne ON!");
+        }
+
+        private void WriteSpiRegister(SpiDevice spi, Register reg, byte value)
+        {
+            // MFRC522 SPI Protokoll: [0xA0 | reg] + [value]
+            byte[] cmd = { (byte)(0xA0 | (byte)reg), value };
+            spi.Write(cmd);
+            Thread.Sleep(5);
+        }
+
+        private byte ReadSpiRegister(SpiDevice spi, Register reg)
+        {
+            // MFRC522 SPI Protokoll: [0x60 | reg] → 1 Byte lesen
+            byte[] cmd = { (byte)(0x60 | (byte)reg) };
+            byte[] response = new byte[1];
+
+            spi.Write(cmd);
+            Thread.Sleep(5);
+            spi.Read(response);
+
+            return response[0];
+        }
+
     }
 
     public class RFIDReader : BackgroundService
