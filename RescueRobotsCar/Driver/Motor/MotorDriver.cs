@@ -13,8 +13,8 @@ namespace RescueRobotsCar.Driver.Motor
         public readonly int FRRMotorPin = 12; // B-IN2
         public readonly int RLFMotorPin = 17; // A-IN1
         public readonly int RLRMotorPin = 27; // A-IN2
-        public readonly int RRFMotorPin = 15; // A-IN3
-        public readonly int RRRMotorPin = 14; // A-IN4
+        public readonly int RRFMotorPin = 8; // A-IN3
+        public readonly int RRRMotorPin = 25; // A-IN4S
 
         // PWM Pins
         public readonly int FLPWMPin = 22; // B-ENB

@@ -20,15 +20,7 @@ namespace RescueRobotsCar.Driver.RFID
 
         public RFIDRC522Driver()
         {
-            _serialPort = new SerialPort("/dev/ttyUSB0", 115200)
-            {
-                Parity = Parity.None,
-                DataBits = 8,
-                StopBits = StopBits.One,
-                Handshake = Handshake.None,
-                ReadTimeout = 500,
-                WriteTimeout = 500
-            };
+            _serialPort = new SerialPort("/dev/serial0", 9600);
             _serialPort.DataReceived += OnReceivedData;
             _serialPort.Open();
         }
@@ -40,7 +32,7 @@ namespace RescueRobotsCar.Driver.RFID
 
         private void OnReceivedData(object sender, SerialDataReceivedEventArgs e)
         {
-            var data = _serialPort.ReadExisting();
+            var data = _serialPort.ReadLine();
             OnNewCardDetected(data);
             Console.WriteLine($"Received Card Data from ESP. Data: {data}");
         }
