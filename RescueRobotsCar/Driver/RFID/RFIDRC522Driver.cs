@@ -1,10 +1,4 @@
-﻿using Iot.Device.Card.Mifare;
-using Iot.Device.Mfrc522;
-using Iot.Device.Rfid;
-using System.Device.Gpio;
-using System.Device.Spi;
-using System.Reflection.PortableExecutable;
-using System.IO.Ports;
+﻿using System.IO.Ports;
 
 namespace RescueRobotsCar.Driver.RFID
 {
