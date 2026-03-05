@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using RescueRobotsCar.Models.Navigation;
 using RescueRobotsCar.Services;
 using RescueRobotsCar.Driver.Motor;
+using Microsoft.AspNetCore.Http.HttpResults;
+using RescueRobotsCar.Driver.RFID;
 
 namespace RescueRobotsCar.Controllers
 {
@@ -64,6 +66,30 @@ namespace RescueRobotsCar.Controllers
         {
             _logger.Log("Incoming API Stop Request", Logger.Severity.Info);
 
+            return Ok();
+        }
+    }
+
+    [ApiController]
+    [Route("sensors")]
+    public class SensorsController : ControllerBase
+    {
+        private readonly RFIDRC522Driver _rfidDriver;
+
+        public SensorsController(RFIDRC522Driver rfiddriver)
+        {
+            _rfidDriver = rfiddriver;
+        }
+
+        [HttpPost("rfidupdate")]
+        public IActionResult PostRFIDUpdate(Dictionary<string, string> body)
+        {
+            if (!body.ContainsKey("rfid_reader") || !body.ContainsKey("data"))
+            {
+                Console.WriteLine("Invalid RFID update request received. Missing 'rfid_reader' or 'data' in the request body.");
+                return BadRequest();
+            }
+            _rfidDriver.UpdateCardData(body["data"]);
             return Ok();
         }
     }
