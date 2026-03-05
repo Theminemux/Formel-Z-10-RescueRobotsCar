@@ -5,10 +5,13 @@ using RescueRobotsCar.Driver.RFID;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure the app to listen on all network interfaces
+builder.WebHost.UseUrls("http://0.0.0.0:5000", "https://0.0.0.0:5001");
+
 // Add services to the container.
 builder.Services.AddSingleton<RFIDRC522Driver>();
 //builder.Services.AddHostedService<Mpu6050Driver>();
-builder.Services.AddHostedService<RFIDReader>();
+builder.Services.AddHostedService<RFIDRC522Driver>();
 
 
 //builder.Services.AddTransient<Logger>();
