@@ -49,4 +49,4 @@ app.MapControllers();
 
 Console.WriteLine("Rescue Robots Car started.");
 
-await app.RunAsync();
+await app.RunAsync("http://0.0.0.0");
