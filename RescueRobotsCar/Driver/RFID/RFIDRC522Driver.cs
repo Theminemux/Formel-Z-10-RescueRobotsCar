@@ -15,6 +15,7 @@ public class RFIDRC522Driver : BackgroundService
         CurrentCardData = null;
         LastCardData = null;
         LastCardTimestamp = DateTime.UtcNow;
+        IsCardExpired = true;
     }
 
     protected override async Task ExecuteAsync(CancellationToken ct)
@@ -26,8 +27,8 @@ public class RFIDRC522Driver : BackgroundService
                 UpdateCardDataProperty(null, true);
                 Console.WriteLine("Last rfid card expired!");
             }
+            await Task.Delay(1000, ct);
         }
-        await Task.Delay(1000, ct);
     }
 
     private void UpdateCardDataProperty(string? newcarddata, bool isExpired = false)
@@ -43,7 +44,7 @@ public class RFIDRC522Driver : BackgroundService
 
     public void UpdateCardData(string cardData)
     {
-        UpdateCardData(cardData);
+        UpdateCardDataProperty(cardData);
         Console.WriteLine($"New card data was saved. Data: {cardData}");
     }
 }
