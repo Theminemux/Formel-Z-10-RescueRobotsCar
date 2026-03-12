@@ -20,6 +20,7 @@ public class RFIDRC522Driver : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
+        Console.WriteLine("RFID Tag Expiration Service started");
         while (!ct.IsCancellationRequested)
         {
             if (LastCardTimestamp + ExpirationTime < DateTime.UtcNow && !IsCardExpired)

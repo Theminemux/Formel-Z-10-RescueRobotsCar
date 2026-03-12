@@ -1,14 +1,14 @@
-using RescueRobotsCar.Services;
-using RescueRobotsCar.Driver.Motor;
-using RescueRobotsCar.Driver.MPU6050;
 using RescueRobotsCar.Driver.RFID;
+using RescueRobotsCar.Driver.Servo;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddSingleton<RFIDRC522Driver>();
+builder.Services.AddSingleton<ServoDriver>();
 //builder.Services.AddHostedService<Mpu6050Driver>();
 builder.Services.AddHostedService<RFIDRC522Driver>();
+builder.Services.AddHostedService<ServoDriver>();
 
 
 //builder.Services.AddTransient<Logger>();
