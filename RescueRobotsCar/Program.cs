@@ -1,5 +1,6 @@
 using RescueRobotsCar.Driver.RFID;
 using RescueRobotsCar.Driver.Servo;
+using RescueRobotsCar.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,8 @@ builder.Services.AddSingleton<ServoDriver>();
 //builder.Services.AddHostedService<Mpu6050Driver>();
 builder.Services.AddHostedService<RFIDRC522Driver>();
 builder.Services.AddHostedService<ServoDriver>();
+
+builder.Services.AddHostedService<Startup>();
 
 
 //builder.Services.AddTransient<Logger>();
@@ -49,4 +52,4 @@ app.MapControllers();
 
 Console.WriteLine("Rescue Robots Car started.");
 
-await app.RunAsync("http://0.0.0.0:5000");
+await app.RunAsync("http://0.0.0.0");
