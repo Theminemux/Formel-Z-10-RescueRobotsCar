@@ -1,8 +1,6 @@
-using RescueRobotsCar.Services;
-using RescueRobotsCar.Driver.Motor;
-using RescueRobotsCar.Driver.MPU6050;
 using RescueRobotsCar.Driver.RFID;
 using RescueRobotsCar.Driver.IRSensor;
+using RescueRobotsCar.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +10,7 @@ builder.Services.AddSingleton<IRSensor>();
 //builder.Services.AddHostedService<Mpu6050Driver>();
 builder.Services.AddHostedService<RFIDRC522Driver>();
 builder.Services.AddHostedService<IRSensor>();
+builder.Services.AddHostedService<Startup>();
 
 //builder.Services.AddTransient<Logger>();
 //builder.Services.AddSingleton<NavigatorService>();
@@ -35,6 +34,7 @@ try
 }
 catch (Exception ex)
 {
+    Console.WriteLine($"Error whilst testing code: {ex}");
     //logger.Log($"Error initializing motors: {ex.Message}", Logger.Severity.Error);
     //motor.StopAllMotors();
 }
@@ -51,4 +51,11 @@ app.MapControllers();
 
 Console.WriteLine("Rescue Robots Car started.");
 
-await app.RunAsync("http://0.0.0.0:5000");
+try
+{
+    await app.RunAsync("http://0.0.0.0");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Error running the application: {ex.Message}");
+}
