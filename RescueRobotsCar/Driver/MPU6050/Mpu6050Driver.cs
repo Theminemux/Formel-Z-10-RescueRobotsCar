@@ -103,14 +103,10 @@ namespace RescueRobotsCar.Driver.MPU6050
         private I2cDevice _i2cDevice;
         private MPU6050Config _config = new MPU6050Config();
 
-        private readonly Logger _logger;
-
         public Mpu6050Data Data { get; private set; } = new Mpu6050Data();
 
-        public Mpu6050Driver(Logger logger)
+        public Mpu6050Driver()
         {
-            _logger = logger;
-
             _i2cSettings = new I2cConnectionSettings(_config.I2cBusId, _config.Mpu6050I2cAddress);
             _i2cDevice = I2cDevice.Create(_i2cSettings);
         }
@@ -145,7 +141,6 @@ namespace RescueRobotsCar.Driver.MPU6050
             {
                 await Task.Delay(10, cancellationToken);
                 Data = ReadAll();
-                //_logger.Log($"MPU6050 Data: {Data}", Logger.Severity.Info);
             }
         }
     }

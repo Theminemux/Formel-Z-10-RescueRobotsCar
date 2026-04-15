@@ -96,7 +96,6 @@ namespace RescueRobotsCar.Driver.Motor
 
     public class MotorDriver : IDisposable
     {
-        private readonly Logger _logger;
         private readonly MotorConfig _config;
         private GpioController _gpio;
 
@@ -105,16 +104,15 @@ namespace RescueRobotsCar.Driver.Motor
         public MotorControls? RearLeftMotor { get; private set; }
         public MotorControls? RearRightMotor { get; private set; }
 
-        public MotorDriver(Logger logger, MotorConfig config)
+        public MotorDriver(MotorConfig config)
         {
-            _logger = logger;
             _config = config;
             _gpio = new();
         }
 
         public void InitializeMotors()
         {
-            _logger.Log("Initializing motordriver", Logger.Severity.Info);
+            Console.WriteLine("Initializing motordriver");
             // GPIO Pins
             _gpio.OpenPin(_config.FLFMotorPin, PinMode.Output);
             _gpio.OpenPin(_config.FLRMotorPin, PinMode.Output);
@@ -141,7 +139,7 @@ namespace RescueRobotsCar.Driver.Motor
         {
             if (FrontLeftMotor == null || FrontRightMotor == null || RearLeftMotor == null || RearRightMotor == null)
             {
-                _logger.Log("Motors not initialized. Cannot perform test.", Logger.Severity.Error);
+                Console.WriteLine("Motors not initialized. Cannot perform test.");
                 return;
             }
 
@@ -169,7 +167,7 @@ namespace RescueRobotsCar.Driver.Motor
 
             StopAllMotors();
 
-            _logger.Log("Motor test completed.", Logger.Severity.Info);
+            Console.WriteLine("Motor test completed.");
         }
 
         public void StopAllMotors()

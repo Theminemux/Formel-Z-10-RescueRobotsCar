@@ -1,13 +1,14 @@
 ﻿using System.Device.Spi;
 
-namespace RescueRobotsCar.Driver.IRSensor
+namespace RescueRobotsCar.Driver.LineSensors
 {
-    public class IRSensor : BackgroundService
+    public class LineSensor : BackgroundService
     {
         private readonly SpiDevice _spi;
-        private bool _running;
 
-        public IRSensor()
+        public int[] SensorValuesLeftRight { get; private set; }
+
+        public LineSensor()
         {
             var settings = new SpiConnectionSettings(0, 0) // Bus 0, CE0
             {
@@ -16,10 +17,13 @@ namespace RescueRobotsCar.Driver.IRSensor
             };
 
             _spi = SpiDevice.Create(settings);
+
+            SensorValuesLeftRight = new int[5];
         }
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
+            Console.WriteLine("Line Sensor started.");
             while (!cancellationToken.IsCancellationRequested)
             {
                 int[] values = new int[5];
@@ -29,9 +33,7 @@ namespace RescueRobotsCar.Driver.IRSensor
                     values[i] = ReadChannel(i);
                 }
 
-                Console.WriteLine(
-                    $"L2:{values[0],4}  L1:{values[1],4}  M:{values[2],4}  R1:{values[3],4}  R2:{values[4],4}"
-                );
+                SensorValuesLeftRight = values;
 
                 await Task.Delay(50); // kannst du später auf 10 runterdrehen
             }

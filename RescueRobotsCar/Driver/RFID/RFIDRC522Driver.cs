@@ -23,7 +23,7 @@ public class RFIDRC522Driver : BackgroundService
         Console.WriteLine("RFID Tag Expiration Service started");
         while (!ct.IsCancellationRequested)
         {
-            if (LastCardTimestamp + ExpirationTime < DateTime.UtcNow && !IsCardExpired)
+            if (((LastCardTimestamp + ExpirationTime) < DateTime.UtcNow) && !IsCardExpired)
             {
                 UpdateCardDataProperty(null, true);
                 Console.WriteLine("Last rfid card expired!");
