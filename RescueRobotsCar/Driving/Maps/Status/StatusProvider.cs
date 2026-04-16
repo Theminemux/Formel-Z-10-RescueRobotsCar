@@ -14,7 +14,7 @@ namespace RescueRobotsCar.Driving.Maps.Status
         public async Task<StatusContainer> GetStatus()
         {
             MapObjectsContainer? mapObjects = await _mapObjectsProvider.GetMapObjectsAsync();
-            return new StatusContainer
+            return StatusContainer.Default with
             {
                 MapObjects = mapObjects,
             };
