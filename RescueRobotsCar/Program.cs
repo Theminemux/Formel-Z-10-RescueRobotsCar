@@ -6,7 +6,6 @@ using RescueRobotsCar.Services;
 using RescueRobotsCar.Driving.Sensors;
 using RescueRobotsCar.Driving.Maps;
 using RescueRobotsCar.Driving.Maps.MapObjects;
-using RescueRobotsCar.Driving.Maps.Status;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +31,9 @@ builder.Services.AddSingleton<MapProvider>();
 builder.Services.AddSingleton<SystemStateService>();
 builder.Services.AddSingleton<MapObjectsProvider>();
 builder.Services.AddSingleton<StatusProvider>();
+builder.Services.AddSingleton<CollectedObjectsManager>();
+builder.Services.AddSingleton<StatusSetter>();
+builder.Services.AddSingleton<LineFollower>();
 
 builder.Services.AddHttpClient("api")
     .ConfigurePrimaryHttpMessageHandler(() =>

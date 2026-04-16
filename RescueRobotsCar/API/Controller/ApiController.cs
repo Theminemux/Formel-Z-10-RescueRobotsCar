@@ -2,7 +2,6 @@
 using RescueRobotsCar.Driver.LineSensors;
 using RescueRobotsCar.Services;
 using RescueRobotsCar.Driving.Maps.MapObjects;
-using RescueRobotsCar.Driving.Maps.Status;
 
 namespace RescueRobotsCar.API.Controller
 {
@@ -14,17 +13,23 @@ namespace RescueRobotsCar.API.Controller
         private readonly LineSensor _lineSensor;
         private readonly MapObjectsProvider _mapObjectsProvider;
         private readonly StatusProvider _statusProvider;
+        private readonly StatusSetter _statusSetter;
+        private readonly LineFollower _lineFollower;
 
         public ApiController(
-            LineSensor lineSensor, 
+            LineSensor lineSensor,
             SystemStateService systemStateService,
             MapObjectsProvider mapObjectsProvider,
-            StatusProvider statusProvider)
+            StatusProvider statusProvider,
+            StatusSetter statusSetter,
+            LineFollower lineFollower)
         {
             _lineSensor = lineSensor;
             _systemState = systemStateService;
             _mapObjectsProvider = mapObjectsProvider;
             _statusProvider = statusProvider;
+            _lineFollower = lineFollower;
+            _statusSetter = statusSetter;
         }
 
         [HttpGet("checkconnection")]
@@ -41,21 +46,31 @@ namespace RescueRobotsCar.API.Controller
         }
 
         [HttpGet("start")]
-        public IActionResult Start()
+        public async Task<IActionResult> Start()
         {
-            return NotFound();
+            Console.WriteLine("Start command received.");
+            await _statusSetter.SetStatusAsync(StatusSetter.EStatus.Driving);
+            return Ok();
         }
 
         [HttpGet("pause")]
-        public IActionResult Stop()
+        public async Task<IActionResult> Pause()
         {
-            return NotFound();
+            Console.WriteLine("Pause command received.");
+            await _statusSetter.SetStatusAsync(StatusSetter.EStatus.Pause);
+            return Ok();
         }
 
         [HttpGet("resume")]
-        public IActionResult Resume()
+        public async Task<IActionResult> Resume()
         {
-            return NotFound();
+            if ((await _statusSetter.GetStatusAsync()) != (int)StatusSetter.EStatus.Pause)
+            {
+                return BadRequest("Cannot resume because the system is not paused.");
+            }
+            Console.WriteLine("Resume command received.");
+            await _statusSetter.SetStatusAsync(StatusSetter.EStatus.Driving);
+            return Ok();
         }
 
         [HttpGet("reset")]
@@ -73,7 +88,7 @@ namespace RescueRobotsCar.API.Controller
         [HttpGet("status")]
         public async Task<IActionResult> Status()
         {
-            StatusContainer status = await _statusProvider.GetStatus();
+            StatusContainer status = await _statusProvider.GetStatusAsync();
             return Ok(status);
         }
 
@@ -87,6 +102,29 @@ namespace RescueRobotsCar.API.Controller
                             $"MapLoaded: {_systemState.IsMapLoaded}, \n" +
                             $"CompassCalibrated: {_systemState.IsCompassCalibrated}";
             return Ok(status);
+        }
+
+        [HttpGet("debugLineFollowerStart")]
+        public async Task<IActionResult> DebugLineFollowerStart()
+        {
+            Console.WriteLine("Debug Line Follower Start command received.");
+            await _lineFollower.Start();
+            return Ok();
+        }
+
+        [HttpGet("debugLineFollowerStop")]
+        public async Task<IActionResult> DebugLineFollowerStop()
+        {
+            Console.WriteLine("Debug Line Follower Stop command received.");
+            await _lineFollower.Stop();
+            return Ok();
+        }
+
+        [HttpGet("debugLineFollowerLiveData")]
+        public IActionResult DebugLineFollowerLiveData()
+        {
+            var debugData = _lineFollower.GetDebugData();
+            return Ok(debugData);
         }
     }
 }

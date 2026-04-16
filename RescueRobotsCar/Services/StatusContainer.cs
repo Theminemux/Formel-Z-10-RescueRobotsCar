@@ -1,6 +1,6 @@
 ﻿using RescueRobotsCar.Driving.Maps.MapObjects;
 
-namespace RescueRobotsCar.Driving.Maps.Status
+namespace RescueRobotsCar.Services
 {
     public record StatusContainer
     {

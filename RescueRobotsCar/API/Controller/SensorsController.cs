@@ -3,6 +3,7 @@ using RescueRobotsCar.API.Models.Responses;
 using RescueRobotsCar.Driver.LineSensors;
 using RescueRobotsCar.Driver.RFID;
 using RescueRobotsCar.Driving.Sensors;
+using RescueRobotsCar.Services;
 
 namespace RescueRobotsCar.API.Controller
 {
@@ -13,22 +14,41 @@ namespace RescueRobotsCar.API.Controller
         private readonly RFIDRC522Driver _rfidDriver;
         private readonly Compass _compass;
         private readonly LineSensor _lineSensor;
+        private readonly StatusProvider _statusProvider;
+        private readonly CollectedObjectsManager _objectManager;
 
-        public SensorsController(RFIDRC522Driver rfiddriver, Compass compass, LineSensor lineSensor)
+        public SensorsController(RFIDRC522Driver rfiddriver, Compass compass, LineSensor lineSensor, StatusProvider statusProvider, CollectedObjectsManager objectManager)
         {
             _rfidDriver = rfiddriver;
             _compass = compass;
             _lineSensor = lineSensor;
+            _statusProvider = statusProvider;
+            _objectManager = objectManager;
         }
 
         [HttpPost("rfidupdate")]
-        public IActionResult PostRFIDUpdate(Dictionary<string, string> body)
+        public async Task<IActionResult> PostRFIDUpdate(Dictionary<string, string> body)
         {
+            var status = await _statusProvider.GetStatusAsync();
+            if (status.Status != (int)StatusContainer.EStatus.Driving)
+                return Ok();
+
             if (!body.ContainsKey("rfid_reader") || !body.ContainsKey("data"))
             {
                 Console.WriteLine("Invalid RFID update request received. Missing 'rfid_reader' or 'data' in the request body.");
                 return BadRequest();
             }
+
+            if (body["data"].StartsWith("OBJ"))
+            {
+                // Object collected
+                _objectManager.AddCollectedObject(body["data"]);
+            }
+            else
+            {
+                // Track coordinate scanned
+            }
+
             _rfidDriver.UpdateCardData(body["data"]);
             return Ok();
         }
