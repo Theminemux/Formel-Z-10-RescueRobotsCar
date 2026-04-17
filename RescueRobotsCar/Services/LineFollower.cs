@@ -89,10 +89,10 @@ namespace RescueRobotsCar.Services
                         continue;
                     }
 
-                    _motorDriver.FrontLeftMotor.SetSpeed((int)leftValue, false);
-                    _motorDriver.RearLeftMotor.SetSpeed((int)leftValue, false);
-                    _motorDriver.FrontRightMotor.SetSpeed((int)rightValue, false);
-                    _motorDriver.RearRightMotor.SetSpeed((int)rightValue, false);
+                    _motorDriver.FrontLeftMotor.SetSpeed((int)leftValue);
+                    _motorDriver.RearLeftMotor.SetSpeed((int)leftValue);
+                    _motorDriver.FrontRightMotor.SetSpeed((int)rightValue);
+                    _motorDriver.RearRightMotor.SetSpeed((int)rightValue);
 
                     // Start() nur einmal aufrufen!
                     _motorDriver.FrontLeftMotor.Start();

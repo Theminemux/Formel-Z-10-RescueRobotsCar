@@ -7,20 +7,20 @@ namespace RescueRobotsCar.Driver.Motor
     public class MotorConfig
     {
         // Motor GPIO Pins
-        public readonly int FLFMotorPin = 24; // B-IN3
-        public readonly int FLRMotorPin = 23; // B-IN4
-        public readonly int FRFMotorPin = 6;  // B-IN1
-        public readonly int FRRMotorPin = 12; // B-IN2
-        public readonly int RLFMotorPin = 27; // A-IN1
-        public readonly int RLRMotorPin = 17; // A-IN2
-        public readonly int RRFMotorPin = 15; // A-IN3
-        public readonly int RRRMotorPin = 14; // A-IN4
+        public readonly int FLFMotorPin = 14; // B-IN4 (Vorne Links Vorwärts)
+        public readonly int FLRMotorPin = 15; // B-IN3 (Vorne Links Rückwärts)
+        public readonly int FRFMotorPin = 17; // B-IN2 (Vorne Rechts Vorwärts)
+        public readonly int FRRMotorPin = 27; // B-IN1 (Vorne Rechts Rückwärts)
+        public readonly int RLFMotorPin = 23; // A-IN4 (Hinten Links Vorwärts)
+        public readonly int RLRMotorPin = 24; // A-IN3 (Hinten Links Rückwärts)
+        public readonly int RRFMotorPin = 12; // A-IN2 (Hinten Rechts Vorwärts)
+        public readonly int RRRMotorPin = 6;  // A-IN1 (Hinten Rechts Rückwärts)
 
         // PWM Pins
-        public readonly int FLPWMPin = 22; // B-ENB
-        public readonly int FRPWMPin = 5;  // B-ENA
-        public readonly int RLPWMPin = 18; // A-ENA
-        public readonly int RRPWMPin = 4;  // A-ENB
+        public readonly int FLPWMPin = 4;  // B-ENB (Vorne Links)
+        public readonly int FRPWMPin = 18; // B-ENA (Vorne Rechts)
+        public readonly int RLPWMPin = 22; // A-ENB (Hinten Links)
+        public readonly int RRPWMPin = 5;  // A-ENA (Hinten Rechts)
 
         //BK1 = Vorne Rechts
         //BK3 = Vorne Links
@@ -48,12 +48,10 @@ namespace RescueRobotsCar.Driver.Motor
             Speed = 0;
         }
 
-        public void SetSpeed(int speed, bool inverted)
+        public void SetSpeed(int speed)
         {
             if (speed < -100 || speed > 100)
                 throw new ArgumentOutOfRangeException(nameof(speed), "Speed must be between -100 and 100.");
-            if (inverted)
-                speed = -speed;
             Speed = speed;
             if (speed > 0)
             {
@@ -150,10 +148,10 @@ namespace RescueRobotsCar.Driver.Motor
                 return;
             }
 
-            FrontLeftMotor?.SetSpeed(20, true);
-            FrontRightMotor?.SetSpeed(20, true);
-            RearLeftMotor?.SetSpeed(20, false);
-            RearRightMotor?.SetSpeed(20, false);
+            FrontLeftMotor?.SetSpeed(20);
+            FrontRightMotor?.SetSpeed(20);
+            RearLeftMotor?.SetSpeed(20);
+            RearRightMotor?.SetSpeed(20);
             FrontLeftMotor?.Start();
             FrontRightMotor?.Start();
             RearLeftMotor?.Start();
@@ -161,10 +159,10 @@ namespace RescueRobotsCar.Driver.Motor
 
             System.Threading.Thread.Sleep(2000); // Run for 2 seconds
 
-            FrontLeftMotor?.SetSpeed(100, true);
-            FrontRightMotor?.SetSpeed(100, true);
-            RearLeftMotor?.SetSpeed(100, false);
-            RearRightMotor?.SetSpeed(100, false);
+            FrontLeftMotor?.SetSpeed(100);
+            FrontRightMotor?.SetSpeed(100);
+            RearLeftMotor?.SetSpeed(100);
+            RearRightMotor?.SetSpeed(100);
             FrontLeftMotor?.Start();
             FrontRightMotor?.Start();
             RearLeftMotor?.Start();
@@ -179,10 +177,10 @@ namespace RescueRobotsCar.Driver.Motor
 
         public void StopAllMotors()
         {
-            FrontLeftMotor?.SetSpeed(0, true);
-            FrontRightMotor?.SetSpeed(0, true);
-            RearLeftMotor?.SetSpeed(0, false);
-            RearRightMotor?.SetSpeed(0, false);
+            FrontLeftMotor?.SetSpeed(0);
+            FrontRightMotor?.SetSpeed(0);
+            RearLeftMotor?.SetSpeed(0);
+            RearRightMotor?.SetSpeed(0);
             FrontLeftMotor?.Stop();
             FrontRightMotor?.Stop();
             RearLeftMotor?.Stop();
