@@ -108,7 +108,7 @@ namespace RescueRobotsCar.API.Controller
         public async Task<IActionResult> DebugLineFollowerStart()
         {
             Console.WriteLine("Debug Line Follower Start command received.");
-            await _lineFollower.Start();
+            _ = _lineFollower.Start();
             return Ok();
         }
 

@@ -1,1 +1,9 @@
 Pin Layout
+A - ENA + IN1 = Hinten Rechts Rückwärts
+A - ENA + IN2 = Hinten Rechts Vorwärts
+A - ENB + IN3 = Hinten Links Rückwärts
+A - ENB + IN4 = Hinten Links Vorwärts
+B - ENA + IN1 = Vorne Rechts Rückwärts
+B - ENA + IN2 = Vorne Rechts Vorwärts
+B - ENB + IN3 = Vorne Links Rückwärts
+B - ENB + IN4 = Vorne Links Vorwärts
