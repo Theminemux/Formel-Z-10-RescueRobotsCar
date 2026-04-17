@@ -7,3 +7,17 @@ B - ENA + IN1 = Vorne Rechts Rückwärts
 B - ENA + IN2 = Vorne Rechts Vorwärts
 B - ENB + IN3 = Vorne Links Rückwärts
 B - ENB + IN4 = Vorne Links Vorwärts
+
+A - ENA = 5
+A - ENB = 22
+B - ENA = 18
+B - ENB = 4
+
+A - IN1 = 6
+A - IN2 = 12
+A - IN3 = 24
+A - IN4 = 23
+B - IN1 = 27
+B - IN2 = 17
+B - IN3 = 15
+B - IN4 = 14
