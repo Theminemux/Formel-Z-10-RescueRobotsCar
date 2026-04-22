@@ -32,7 +32,7 @@ namespace RescueRobotsCar.Services
         public async Task StartAsync(CancellationToken ct)
         {
             // Login zum Orange Pi
-            const string url = "http://5.175.245.160:8300/text";
+            const string orangePiUrl = "http://192.168.10.10";
             using var httpClient = _httpClientFactory.CreateClient("api");
 
             string[] args = Environment.GetCommandLineArgs();
@@ -40,15 +40,9 @@ namespace RescueRobotsCar.Services
 
             if (!args.Contains("--skip-login"))
             {
-                var response = await httpClient.GetAsync(url, ct);
-                var ip = await response.Content.ReadAsStringAsync(ct);
+                await _systemStateService.SetOrangePiIp(orangePiUrl);
 
-                if (args.Contains("--use-macbook-port"))
-                    ip += ":8001"; // Nur weil Mac Book gerade genutzt wird und nicht der orange pi. sonst ohne :8000
-
-                await _systemStateService.SetOrangePiIp(ip);
-
-                string link = $"http://{ip}/api/register/?device=rescuecar";
+                string link = $"{orangePiUrl}/api/register/?device=rescuecar";
 
                 Console.WriteLine($"Trying to register with link: {link}");
 

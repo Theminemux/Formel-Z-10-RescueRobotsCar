@@ -1,4 +1,4 @@
-﻿namespace RescueRobotsCar.Driving.Sensors
+﻿namespace RescueRobotsCar.Services
 {
     public class LineSensorsMidpoint
     {

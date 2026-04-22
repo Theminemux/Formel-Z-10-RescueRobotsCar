@@ -27,29 +27,13 @@ namespace RescueRobotsCar.API.Controller
         }
 
         [HttpPost("rfidupdate")]
-        public async Task<IActionResult> PostRFIDUpdate(Dictionary<string, string> body)
+        public async Task<IActionResult> PostRFIDUpdate(RFIDCardData body)
         {
             var status = await _statusProvider.GetStatusAsync();
             if (status.Status != (int)StatusContainer.EStatus.Driving)
                 return Ok();
 
-            if (!body.ContainsKey("rfid_reader") || !body.ContainsKey("data"))
-            {
-                Console.WriteLine("Invalid RFID update request received. Missing 'rfid_reader' or 'data' in the request body.");
-                return BadRequest();
-            }
-
-            if (body["data"].StartsWith("OBJ"))
-            {
-                // Object collected
-                _objectManager.AddCollectedObject(body["data"]);
-            }
-            else
-            {
-                // Track coordinate scanned
-            }
-
-            _rfidDriver.UpdateCardData(body["data"]);
+            _rfidDriver.UpdateCardData(body.Data);
             return Ok();
         }
 

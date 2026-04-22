@@ -1,7 +1,5 @@
-﻿using Microsoft.AspNetCore.Routing.Constraints;
-using RescueRobotsCar.Driver.LineSensors;
+﻿using RescueRobotsCar.Driver.LineSensors;
 using RescueRobotsCar.Driver.Motor;
-using RescueRobotsCar.Driving.Sensors;
 
 namespace RescueRobotsCar.Services
 {
@@ -11,14 +9,12 @@ namespace RescueRobotsCar.Services
         private readonly LineSensor _lineSensor;
 
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-        private Task? _lineFollowingTask;
+        private Task? _lineFollowingTask; // Als Feld speichern!
 
-        private const int Speed = 30;
+        private const int Speed = 100;
         private const double SensorSensitivity = 0.1;
-        private const double MotorDeccelerationFactor = 2.0;
 
         private Dictionary<string, string> debugdata = [];
-        private bool _motorsStarted = false;
 
         public LineFollower(MotorDriver motorDriver, LineSensor lineSensor)
         {
@@ -30,11 +26,10 @@ namespace RescueRobotsCar.Services
         {
             if (_lineFollowingTask != null && !_lineFollowingTask.IsCompleted)
             {
-                return _lineFollowingTask;
+                return _lineFollowingTask; // Task läuft bereits
             }
 
             _cancellationTokenSource = new CancellationTokenSource();
-            _motorsStarted = false;
             _lineFollowingTask = RunLineFollowing(_cancellationTokenSource.Token);
             return _lineFollowingTask;
         }
@@ -57,9 +52,9 @@ namespace RescueRobotsCar.Services
 
         private async Task RunLineFollowing(CancellationToken cancellationToken)
         {
-            try
+            while (!cancellationToken.IsCancellationRequested)
             {
-                while (!cancellationToken.IsCancellationRequested)
+                try
                 {
                     var newDictionary = new Dictionary<string, string>();
 
@@ -70,10 +65,11 @@ namespace RescueRobotsCar.Services
 
                     var leftValue = (midpoint <= 0 || Math.Abs(midpoint) < SensorSensitivity
                         ? 1
-                        : 1 - (Math.Abs(midpoint)) * MotorDeccelerationFactor) * Speed;
+                        : 1 - Math.Abs(midpoint)) * Speed;
                     var rightValue = (midpoint >= 0 || Math.Abs(midpoint) < SensorSensitivity
                         ? 1
-                        : 1 - (Math.Abs(midpoint)) * MotorDeccelerationFactor) * Speed;
+                        : 1 - Math.Abs(midpoint)) * Speed;
+
                     newDictionary["LeftValue"] = leftValue.ToString("F2");
                     newDictionary["RightValue"] = rightValue.ToString("F2");
 
@@ -85,7 +81,6 @@ namespace RescueRobotsCar.Services
                         _motorDriver.RearRightMotor is null)
                     {
                         Console.WriteLine("One or more motors are not initialized.");
-                        await Task.Delay(50, cancellationToken);
                         continue;
                     }
 
@@ -93,22 +88,17 @@ namespace RescueRobotsCar.Services
                     _motorDriver.RearLeftMotor.SetSpeed((int)leftValue);
                     _motorDriver.FrontRightMotor.SetSpeed((int)rightValue);
                     _motorDriver.RearRightMotor.SetSpeed((int)rightValue);
-
-                    // Start() nur einmal aufrufen!
                     _motorDriver.FrontLeftMotor.Start();
                     _motorDriver.RearLeftMotor.Start();
                     _motorDriver.FrontRightMotor.Start();
                     _motorDriver.RearRightMotor.Start();
-                    _motorsStarted = true;
-
+                }
+                finally
+                {
                     await Task.Delay(50, cancellationToken);
                 }
             }
-            finally
-            {
-                Console.WriteLine("LineFollower stops Motors.");
-                _motorDriver.StopAllMotors();
-            }
+            _motorDriver.StopAllMotors();
         }
 
         public Dictionary<string, string> GetDebugData()

@@ -7,6 +7,8 @@ public class RFIDRC522Driver : BackgroundService
     public DateTime LastCardTimestamp { get; private set; }
     public bool IsCardExpired { get; private set; }
 
+    public event EventHandler<RFIDCardData>? OnTagRead;
+
     private TimeSpan ExpirationTime { get; set; }
 
     public RFIDRC522Driver()
@@ -46,6 +48,21 @@ public class RFIDRC522Driver : BackgroundService
     public void UpdateCardData(string cardData)
     {
         UpdateCardDataProperty(cardData);
+        TriggerTagRead(new RFIDCardData(cardData));
         Console.WriteLine($"New card data was saved. Data: {cardData}");
+    }
+
+    public void TriggerTagRead(RFIDCardData cardData)
+    {
+        OnTagRead?.Invoke(this, cardData);
+    }
+}
+
+public class RFIDCardData : EventArgs
+{
+    public string Data { get; set; }
+    public RFIDCardData(string data)
+    {
+        Data = data;
     }
 }

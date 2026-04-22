@@ -34,6 +34,8 @@ builder.Services.AddSingleton<StatusProvider>();
 builder.Services.AddSingleton<CollectedObjectsManager>();
 builder.Services.AddSingleton<StatusSetter>();
 builder.Services.AddSingleton<LineFollower>();
+builder.Services.AddSingleton<RFIDTagConverter>();
+builder.Services.AddSingleton<PositionService>();
 
 builder.Services.AddHttpClient("api")
     .ConfigurePrimaryHttpMessageHandler(() =>
