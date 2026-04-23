@@ -116,7 +116,7 @@ namespace RescueRobotsCar.Services
                 {
                     Console.WriteLine("OrangePi IP is unknown. Can't test esp32 connection.");
                 }
-                var response = await httpClient.GetAsync($"http://{_systemStateService.OrangePiIp}/api/register/?device=rescuecar-esp32", ct);
+                var response = await httpClient.GetAsync($"{_systemStateService.OrangePiIp}/api/register/?device=rescuecar-esp32", ct);
                 if (!response.IsSuccessStatusCode)
                 {
                     Console.WriteLine("ESP32 connection failed");

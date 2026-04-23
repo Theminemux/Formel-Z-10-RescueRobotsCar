@@ -1,0 +1,3 @@
+TODO:
+- api/newjson bekommt nur die Id die er einsammeln soll
+- api/status gibt alle gesammelten Ids + die die er finden soll zurück.

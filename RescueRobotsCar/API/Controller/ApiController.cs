@@ -2,6 +2,7 @@
 using RescueRobotsCar.Driver.LineSensors;
 using RescueRobotsCar.Services;
 using RescueRobotsCar.Driving.Maps.MapObjects;
+using RescueRobotsCar.API.Models.Responses;
 
 namespace RescueRobotsCar.API.Controller
 {
@@ -125,6 +126,13 @@ namespace RescueRobotsCar.API.Controller
         {
             var debugData = _lineFollower.GetDebugData();
             return Ok(debugData);
+        }
+
+        [HttpPost("debugLineFollowerSettings")]
+        public IActionResult DebugLineFollowerSettings(LineFollowerSettings settings)
+        {
+            _lineFollower.ImportNewSettings(settings.Speed, settings.TurnFactor, settings.SteeringBoostFactor);
+            return Ok();
         }
     }
 }

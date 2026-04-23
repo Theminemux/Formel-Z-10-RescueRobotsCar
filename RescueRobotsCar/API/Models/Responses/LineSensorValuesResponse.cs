@@ -8,5 +8,13 @@
         public required int RightCenter { get; init; }
         public required int Right { get; init; }
         public required double CalculatedMidpoint { get; init; }
+        public required LineFollowerSettings Settings { get; init; }
+    }
+
+    public record LineFollowerSettings
+    {
+        public required int Speed { get; init; }
+        public required double TurnFactor { get; init; }
+        public required double SteeringBoostFactor { get; init; }
     }
 }

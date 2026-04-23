@@ -16,14 +16,16 @@ namespace RescueRobotsCar.API.Controller
         private readonly LineSensor _lineSensor;
         private readonly StatusProvider _statusProvider;
         private readonly CollectedObjectsManager _objectManager;
+        private readonly LineFollower _lineFollower;
 
-        public SensorsController(RFIDRC522Driver rfiddriver, Compass compass, LineSensor lineSensor, StatusProvider statusProvider, CollectedObjectsManager objectManager)
+        public SensorsController(RFIDRC522Driver rfiddriver, Compass compass, LineSensor lineSensor, StatusProvider statusProvider, CollectedObjectsManager objectManager, LineFollower lineFollower)
         {
             _rfidDriver = rfiddriver;
             _compass = compass;
             _lineSensor = lineSensor;
             _statusProvider = statusProvider;
             _objectManager = objectManager;
+            _lineFollower = lineFollower;
         }
 
         [HttpPost("rfidupdate")]
@@ -47,7 +49,13 @@ namespace RescueRobotsCar.API.Controller
                 Center = _lineSensor.SensorValuesLeftRight[2],
                 RightCenter = _lineSensor.SensorValuesLeftRight[3],
                 Right = _lineSensor.SensorValuesLeftRight[4],
-                CalculatedMidpoint = LineSensorsMidpoint.CalculateMidpoint(_lineSensor.SensorValuesLeftRight)
+                CalculatedMidpoint = LineSensorsMidpoint.CalculateMidpoint(_lineSensor.SensorValuesLeftRight),
+                Settings = new LineFollowerSettings
+                { 
+                    Speed = _lineFollower.Speed,
+                    TurnFactor = _lineFollower.SensorSensitivity,
+                    SteeringBoostFactor = _lineFollower.SteeringBoostFactor
+                }
             };
             return Ok(response);
         }

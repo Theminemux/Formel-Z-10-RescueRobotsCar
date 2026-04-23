@@ -11,8 +11,9 @@ namespace RescueRobotsCar.Services
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private Task? _lineFollowingTask; // Als Feld speichern!
 
-        private const int Speed = 100;
-        private const double SensorSensitivity = 0.1;
+        public int Speed = 5;
+        public double SensorSensitivity = 0.2;
+        public double SteeringBoostFactor = 1.0;
 
         private Dictionary<string, string> debugdata = [];
 
@@ -64,14 +65,17 @@ namespace RescueRobotsCar.Services
                     newDictionary["Midpoint"] = midpoint.ToString("F2");
 
                     var leftValue = (midpoint <= 0 || Math.Abs(midpoint) < SensorSensitivity
-                        ? 1
+                        ? 1 + (Math.Abs(midpoint) * SteeringBoostFactor)
                         : 1 - Math.Abs(midpoint)) * Speed;
                     var rightValue = (midpoint >= 0 || Math.Abs(midpoint) < SensorSensitivity
-                        ? 1
+                        ? 1 + (Math.Abs(midpoint) * SteeringBoostFactor)
                         : 1 - Math.Abs(midpoint)) * Speed;
 
                     newDictionary["LeftValue"] = leftValue.ToString("F2");
                     newDictionary["RightValue"] = rightValue.ToString("F2");
+                    newDictionary["Speed"] = Speed.ToString();
+                    newDictionary["SensorSensitivity"] = SensorSensitivity.ToString("F2");
+                    newDictionary["SteeringBoostFactor"] = SteeringBoostFactor.ToString("F2");
 
                     debugdata = newDictionary;
 
@@ -98,12 +102,20 @@ namespace RescueRobotsCar.Services
                     await Task.Delay(50, cancellationToken);
                 }
             }
+            Console.WriteLine("Stopping all motors.");
             _motorDriver.StopAllMotors();
         }
 
         public Dictionary<string, string> GetDebugData()
         {
             return debugdata;
+        }
+
+        public void ImportNewSettings(int speed, double sensorSensitivity, double steeringBoostFactor)
+        {
+            Speed = speed;
+            SensorSensitivity = sensorSensitivity;
+            SteeringBoostFactor = steeringBoostFactor;
         }
     }
 }

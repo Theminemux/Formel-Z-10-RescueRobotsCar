@@ -40,18 +40,21 @@
                     // Get lv
                     if (rawCoordinate.Length == 2)
                         lv = 0;
-                    else
+                    else if (rawCoordinate.Length == 3)
                     {
                         lv = 1;
                         rawCoordinate = rawCoordinate.Substring(1, 2);
                     }
+                    else
+                        throw new Exception("Irgend wer hat mit den RFID Tags gepfuscht. Das sollte ne Koordinate sein eigentlich. ISSES ABER NICHT. LV falsch");
 
                     // get x
-                    keyValuePairs.TryGetValue(rawCoordinate[0], out x);
+                    if (!keyValuePairs.TryGetValue(rawCoordinate[0], out x))
+                        throw new Exception("Irgend wer hat mit den RFID Tags gepfuscht. Das sollte ne Koordinate sein eigentlich. ISSES ABER NICHT. X falsch");
 
                     // get y
-                    int.TryParse(rawCoordinate[1].ToString(), out y);
-
+                    if (!int.TryParse(rawCoordinate[1].ToString(), out y))
+                        throw new Exception("Irgend wer hat mit den RFID Tags gepfuscht. Das sollte ne Koordinate sein eigentlich. ISSES ABER NICHT. Y falsch");
                     var newPosition = new Position { X = x, Y = y, Lv = lv };
                     await SetPositionAsync(newPosition);
                 }
