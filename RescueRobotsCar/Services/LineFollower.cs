@@ -9,11 +9,13 @@ namespace RescueRobotsCar.Services
         private readonly LineSensor _lineSensor;
 
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-        private Task? _lineFollowingTask; // Als Feld speichern!
+        private Task? _lineFollowingTask;
 
         public int Speed = 5;
         public double SensorSensitivity = 0.2;
         public double SteeringBoostFactor = 1.0;
+        public int BackupSpeed = -20; // Rückwärtsgeschwindigkeit wenn keine Linie erkannt
+        public double LineDetectionThreshold = 300; // Abweichung vom Mittelpunkt um Linie als "verloren" zu erkennen
 
         private Dictionary<string, string> debugdata = [];
 
@@ -27,7 +29,7 @@ namespace RescueRobotsCar.Services
         {
             if (_lineFollowingTask != null && !_lineFollowingTask.IsCompleted)
             {
-                return _lineFollowingTask; // Task läuft bereits
+                return _lineFollowingTask;
             }
 
             _cancellationTokenSource = new CancellationTokenSource();
@@ -46,9 +48,15 @@ namespace RescueRobotsCar.Services
                 }
                 catch (OperationCanceledException)
                 {
-                    // Erwartet, wenn Task abgebrochen wird
+                    // Erwartet
                 }
             }
+        }
+
+        private bool IsLineDetected(double midpoint)
+        {
+            // Prüfe ob die Abweichung vom Mittelpunkt zu groß ist (Linie verloren)
+            return Math.Abs(midpoint) < LineDetectionThreshold;
         }
 
         private async Task RunLineFollowing(CancellationToken cancellationToken)
@@ -64,18 +72,36 @@ namespace RescueRobotsCar.Services
                         sensorValues.Select(value => 1024 - value).ToArray());
                     newDictionary["Midpoint"] = midpoint.ToString("F2");
 
-                    var leftValue = (midpoint <= 0 || Math.Abs(midpoint) < SensorSensitivity
-                        ? 1 + (Math.Abs(midpoint) * SteeringBoostFactor)
-                        : 1 - Math.Abs(midpoint)) * Speed;
-                    var rightValue = (midpoint >= 0 || Math.Abs(midpoint) < SensorSensitivity
-                        ? 1 + (Math.Abs(midpoint) * SteeringBoostFactor)
-                        : 1 - Math.Abs(midpoint)) * Speed;
+                    int leftValue;
+                    int rightValue;
 
-                    newDictionary["LeftValue"] = leftValue.ToString("F2");
-                    newDictionary["RightValue"] = rightValue.ToString("F2");
+                    // Prüfe ob Linie erkannt wurde
+                    if (IsLineDetected(midpoint))
+                    {
+                        // Normale Panzersteuerung
+                        leftValue = (int)(0 - (midpoint * Speed));
+                        rightValue = (int)(0 + (midpoint * Speed));
+                        
+                        newDictionary["Status"] = "Following Line";
+                    }
+                    else
+                    {
+                        // Linie verloren - fahre rückwärts
+                        leftValue = BackupSpeed;
+                        rightValue = BackupSpeed;
+                        
+                        newDictionary["Status"] = "Line Lost - Reversing";
+                    }
+
+                    // Begrenzung auf ±100
+                    leftValue = (int)Math.Clamp(leftValue, -100, 100);
+                    rightValue = (int)Math.Clamp(rightValue, -100, 100);
+
+                    newDictionary["LeftValue"] = leftValue.ToString();
+                    newDictionary["RightValue"] = rightValue.ToString();
                     newDictionary["Speed"] = Speed.ToString();
-                    newDictionary["SensorSensitivity"] = SensorSensitivity.ToString("F2");
                     newDictionary["SteeringBoostFactor"] = SteeringBoostFactor.ToString("F2");
+                    newDictionary["BackupSpeed"] = BackupSpeed.ToString();
 
                     debugdata = newDictionary;
 
@@ -88,10 +114,10 @@ namespace RescueRobotsCar.Services
                         continue;
                     }
 
-                    _motorDriver.FrontLeftMotor.SetSpeed((int)leftValue);
-                    _motorDriver.RearLeftMotor.SetSpeed((int)leftValue);
-                    _motorDriver.FrontRightMotor.SetSpeed((int)rightValue);
-                    _motorDriver.RearRightMotor.SetSpeed((int)rightValue);
+                    _motorDriver.FrontLeftMotor.SetSpeed(leftValue);
+                    _motorDriver.RearLeftMotor.SetSpeed(leftValue);
+                    _motorDriver.FrontRightMotor.SetSpeed(rightValue);
+                    _motorDriver.RearRightMotor.SetSpeed(rightValue);
                     _motorDriver.FrontLeftMotor.Start();
                     _motorDriver.RearLeftMotor.Start();
                     _motorDriver.FrontRightMotor.Start();
@@ -111,11 +137,12 @@ namespace RescueRobotsCar.Services
             return debugdata;
         }
 
-        public void ImportNewSettings(int speed, double sensorSensitivity, double steeringBoostFactor)
+        public void ImportNewSettings(int speed, double sensorSensitivity, double steeringBoostFactor, int backupSpeed = -10)
         {
             Speed = speed;
             SensorSensitivity = sensorSensitivity;
             SteeringBoostFactor = steeringBoostFactor;
+            BackupSpeed = backupSpeed;
         }
     }
 }
