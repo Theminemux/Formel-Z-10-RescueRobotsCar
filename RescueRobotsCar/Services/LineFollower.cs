@@ -11,11 +11,11 @@ namespace RescueRobotsCar.Services
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private Task? _lineFollowingTask;
 
-        public int Speed = 5;
+        public int Speed = 50; // Erhöht auf 50 für bessere Fahrt
         public double SensorSensitivity = 0.2;
-        public double SteeringBoostFactor = 1.0;
-        public int BackupSpeed = -20; // Rückwärtsgeschwindigkeit wenn keine Linie erkannt
-        public double LineDetectionThreshold = 300; // Abweichung vom Mittelpunkt um Linie als "verloren" zu erkennen
+        public double SteeringBoostFactor = 1.5;
+        public int BackupSpeed = -20;
+        public double LineDetectionThreshold = 300;
 
         private Dictionary<string, string> debugdata = [];
 
@@ -55,7 +55,6 @@ namespace RescueRobotsCar.Services
 
         private bool IsLineDetected(double midpoint)
         {
-            // Prüfe ob die Abweichung vom Mittelpunkt zu groß ist (Linie verloren)
             return Math.Abs(midpoint) < LineDetectionThreshold;
         }
 
@@ -75,25 +74,22 @@ namespace RescueRobotsCar.Services
                     int leftValue;
                     int rightValue;
 
-                    // Prüfe ob Linie erkannt wurde
                     if (IsLineDetected(midpoint))
                     {
-                        // Normale Panzersteuerung
-                        leftValue = (int)(0 - (midpoint * Speed));
-                        rightValue = (int)(0 + (midpoint * Speed));
+                        // Panzersteuerung: Basisgeschwindigkeit + Lenkung
+                        leftValue = (int)(Speed - (midpoint * SteeringBoostFactor));
+                        rightValue = (int)(Speed + (midpoint * SteeringBoostFactor));
                         
                         newDictionary["Status"] = "Following Line";
                     }
                     else
                     {
-                        // Linie verloren - fahre rückwärts
                         leftValue = BackupSpeed;
                         rightValue = BackupSpeed;
                         
                         newDictionary["Status"] = "Line Lost - Reversing";
                     }
 
-                    // Begrenzung auf ±100
                     leftValue = (int)Math.Clamp(leftValue, -100, 100);
                     rightValue = (int)Math.Clamp(rightValue, -100, 100);
 
@@ -125,6 +121,7 @@ namespace RescueRobotsCar.Services
                 }
                 finally
                 {
+                    Console.Write(".");
                     await Task.Delay(50, cancellationToken);
                 }
             }
@@ -137,7 +134,7 @@ namespace RescueRobotsCar.Services
             return debugdata;
         }
 
-        public void ImportNewSettings(int speed, double sensorSensitivity, double steeringBoostFactor, int backupSpeed = -10)
+        public void ImportNewSettings(int speed, double sensorSensitivity, double steeringBoostFactor, int backupSpeed = -20)
         {
             Speed = speed;
             SensorSensitivity = sensorSensitivity;
