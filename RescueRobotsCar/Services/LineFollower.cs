@@ -11,11 +11,12 @@ namespace RescueRobotsCar.Services
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private Task? _lineFollowingTask;
 
-        public int Speed = 50; // Erhöht auf 50 für bessere Fahrt
+        public int Speed = 50;
         public double SensorSensitivity = 0.2;
         public double SteeringBoostFactor = 1.5;
         public int BackupSpeed = -20;
         public double LineDetectionThreshold = 300;
+        public double LineCenteredThreshold = 100; // Neue Grenze für Linienzentrierumg
 
         private Dictionary<string, string> debugdata = [];
 
@@ -58,6 +59,11 @@ namespace RescueRobotsCar.Services
             return Math.Abs(midpoint) < LineDetectionThreshold;
         }
 
+        private bool IsLineCentered(double midpoint)
+        {
+            return Math.Abs(midpoint) < LineCenteredThreshold;
+        }
+
         private async Task RunLineFollowing(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
@@ -74,20 +80,26 @@ namespace RescueRobotsCar.Services
                     int leftValue;
                     int rightValue;
 
-                    if (IsLineDetected(midpoint))
+                    if (!IsLineDetected(midpoint))
                     {
-                        // Panzersteuerung: Basisgeschwindigkeit + Lenkung
-                        leftValue = (int)(Speed - (midpoint * SteeringBoostFactor));
-                        rightValue = (int)(Speed + (midpoint * SteeringBoostFactor));
-                        
-                        newDictionary["Status"] = "Following Line";
+                        // Linie vollständig verloren - Rückwärts
+                        leftValue = BackupSpeed;
+                        rightValue = BackupSpeed;
+                        newDictionary["Status"] = "Line Lost - Reversing";
+                    }
+                    else if (!IsLineCentered(midpoint))
+                    {
+                        // Linie auf äußeren Dinger - STOPP und zentrieren
+                        leftValue = 0;
+                        rightValue = 0;
+                        newDictionary["Status"] = "Line Off-Center - Centering (STOPPED)";
                     }
                     else
                     {
-                        leftValue = BackupSpeed;
-                        rightValue = BackupSpeed;
-                        
-                        newDictionary["Status"] = "Line Lost - Reversing";
+                        // Linie zentriert - normal fahren mit Lenkung
+                        leftValue = (int)(Speed - (midpoint * SteeringBoostFactor));
+                        rightValue = (int)(Speed + (midpoint * SteeringBoostFactor));
+                        newDictionary["Status"] = "Following Line - Centered";
                     }
 
                     leftValue = (int)Math.Clamp(leftValue, -100, 100);
