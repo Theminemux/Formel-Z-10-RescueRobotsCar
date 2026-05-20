@@ -54,7 +54,10 @@ namespace RescueRobotsCar.API.Controller
                 { 
                     Speed = _lineFollower.Speed,
                     TurnFactor = _lineFollower.SensorSensitivity,
-                    SteeringBoostFactor = _lineFollower.SteeringBoostFactor
+                    SteeringBoostFactor = _lineFollower.SteeringBoostFactor,
+                    BackupSpeed = _lineFollower.BackupSpeed,
+                    LineDetectionThreshold = _lineFollower.LineDetectionThreshold,
+                    LineCenteredRange = _lineFollower.LineCenteredRange
                 }
             };
             return Ok(response);

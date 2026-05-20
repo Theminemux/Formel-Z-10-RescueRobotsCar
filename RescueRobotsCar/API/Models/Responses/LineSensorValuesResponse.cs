@@ -16,5 +16,8 @@
         public required int Speed { get; init; }
         public required double TurnFactor { get; init; }
         public required double SteeringBoostFactor { get; init; }
+        public required int BackupSpeed { get; init; }
+        public required int LineDetectionThreshold { get; init; }
+        public required double LineCenteredRange { get; init; }
     }
 }

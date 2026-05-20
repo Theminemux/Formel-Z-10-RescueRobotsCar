@@ -131,7 +131,7 @@ namespace RescueRobotsCar.API.Controller
         [HttpPost("debugLineFollowerSettings")]
         public IActionResult DebugLineFollowerSettings(LineFollowerSettings settings)
         {
-            _lineFollower.ImportNewSettings(settings.Speed, settings.TurnFactor, settings.SteeringBoostFactor);
+            _lineFollower.ImportNewSettings(settings.Speed, settings.TurnFactor, settings.SteeringBoostFactor, settings.BackupSpeed, settings.LineDetectionThreshold, settings.LineCenteredRange);
             return Ok();
         }
     }
