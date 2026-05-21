@@ -1,7 +1,8 @@
 ﻿using RescueRobotsCar.Driver.LineSensors;
 using RescueRobotsCar.Driver.Motor;
+using RescueRobotsCar.Services;
 
-namespace RescueRobotsCar.Services
+namespace RescueRobotsCar.Driving
 {
     public class LineFollower
     {
@@ -12,8 +13,6 @@ namespace RescueRobotsCar.Services
         private Task? _lineFollowingTask;
 
         public int Speed = 50;
-        public double SensorSensitivity = 0.2;
-        public double SteeringBoostFactor = 1.5;
         public int BackupSpeed = -20;
         public int LineDetectionThreshold = 512;
         public double LineCenteredRange = 0.1; // 10% des Sensorbereichs
@@ -54,11 +53,10 @@ namespace RescueRobotsCar.Services
             }
         }
 
-        private bool IsLineDetected(int[] points)
+        private bool NoLineDetected(int[] points)
         {
             // Calculate the average of the sensor values
-            var average = points.Average();
-            return average > LineDetectionThreshold;
+            return points.All(value => value < LineDetectionThreshold);
         }
 
         private bool IsLineCentered(double midpoint)
@@ -78,11 +76,14 @@ namespace RescueRobotsCar.Services
                     
                     var sensorValues = _lineSensor.SensorValuesLeftRight;
                     newDictionary.Add("Sensor Values", $"Sensor Values: {string.Join(", ", sensorValues)}");
-                    var midpoint = LineSensorsMidpoint.CalculateMidpoint(
-                        sensorValues.Select(value => 1024 - value).ToArray());
+
+                    var adjustedValues = sensorValues.Select(value => 1024 - value).ToArray();
+                    newDictionary.Add("Adjusted Sensor Values", $"Sensor Values: {string.Join(", ", adjustedValues)}");
+
+                    var midpoint = LineSensorsMidpoint.CalculateMidpoint(adjustedValues);
                     newDictionary["Midpoint"] = midpoint.ToString("F2");
 
-                    if (!IsLineDetected(sensorValues))
+                    if (NoLineDetected(adjustedValues))
                     {
                         // Linie vollständig verloren - Rückwärts
                         leftValue = BackupSpeed;
@@ -91,23 +92,22 @@ namespace RescueRobotsCar.Services
                     }
                     else if (!IsLineCentered(midpoint))
                     {
-                        // Linie zentriert - normal fahren mit Lenkung
-                        leftValue = midpoint >= LineDetectionThreshold ? Speed : 0;
-                        rightValue = midpoint <= 0 - LineDetectionThreshold ? Speed : 0;
-                        newDictionary["Status"] = "Following Line - Centered";
+                        leftValue = midpoint >= LineCenteredRange ? Speed : 0;
+                        rightValue = midpoint <= 0 - LineCenteredRange ? Speed : 0;
+                        newDictionary["Status"] = "Drifting - Correcting";
                     }
                     else
                     {
-                        // Linie auf äußeren Dinger - STOPP und zentrieren
                         leftValue = Speed;
                         rightValue = Speed;
-                        newDictionary["Status"] = "Line Off-Center - Centering (STOPPED)";
+                        newDictionary["Status"] = "Following Line - Centered";
                     }
 
                     newDictionary["LeftValue"] = leftValue.ToString();
                     newDictionary["RightValue"] = rightValue.ToString();
                     newDictionary["Speed"] = Speed.ToString();
-                    newDictionary["SteeringBoostFactor"] = SteeringBoostFactor.ToString("F2");
+                    newDictionary["LineDetectionThreshold"] = LineDetectionThreshold.ToString();
+                    newDictionary["LineCenteredRange"] = LineCenteredRange.ToString("F2");
                     newDictionary["BackupSpeed"] = BackupSpeed.ToString();
 
                     debugdata = newDictionary;
@@ -147,15 +147,11 @@ namespace RescueRobotsCar.Services
 
         public void ImportNewSettings(
             int speed, 
-            double sensorSensitivity, 
-            double steeringBoostFactor, 
             int backupSpeed,
             int lineDetectionThreshold,
             double lineCenteredRange)
         {
             Speed = speed;
-            SensorSensitivity = sensorSensitivity;
-            SteeringBoostFactor = steeringBoostFactor;
             BackupSpeed = backupSpeed;
             LineDetectionThreshold = lineDetectionThreshold;
             LineCenteredRange = lineCenteredRange;

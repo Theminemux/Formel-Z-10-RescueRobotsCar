@@ -1,6 +1,5 @@
 ﻿using RescueRobotsCar.Driver.Motor;
 using RescueRobotsCar.Driving.Maps;
-using RescueRobotsCar.Driving.Sensors;
 
 namespace RescueRobotsCar.Services
 {
@@ -9,21 +8,18 @@ namespace RescueRobotsCar.Services
         private readonly SystemStateService _systemStateService;
         private readonly MotorDriver _motors;
         private readonly MapProvider _mapProvider;
-        private readonly Compass _compass;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IHostApplicationLifetime _hostLifetime;
 
         public StartupService(
             MotorDriver motors, 
             MapProvider mapProvider, 
-            Compass compass, 
             IHttpClientFactory httpClientFactory,
             IHostApplicationLifetime hostLifetime,
             SystemStateService systemStateService)
         {
             _motors = motors;
             _mapProvider = mapProvider;
-            _compass = compass;
             _httpClientFactory = httpClientFactory;
             _hostLifetime = hostLifetime;
             _systemStateService = systemStateService;
@@ -91,24 +87,6 @@ namespace RescueRobotsCar.Services
                 await _systemStateService.SetMapLoaded(true);
             }
 
-            if (!args.Contains("--skip-compass-calibration"))
-            {
-                try
-                {
-                    int samples = GetArgumentValue(args, "--compass-samples", 100);
-                    Console.WriteLine($"Calibrating compass with {samples} samples... this should take {samples * 100 / 1000.0} seconds.");
-                    await _compass.CalibrateGyroscope(samples, ct);
-                    Console.WriteLine("Compass calibrated successfully.");
-                    await _systemStateService.SetCompassCalibrated(true);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error calibrating compass: {ex.Message}");
-                    _hostLifetime.StopApplication();
-                    return;
-                }
-            }
-
             // Prüfe Verbindung zum ESP32
             if (!args.Contains("--skip-esp32-check") && _systemStateService.IsLoggedIn)
             {
@@ -116,7 +94,7 @@ namespace RescueRobotsCar.Services
                 {
                     Console.WriteLine("OrangePi IP is unknown. Can't test esp32 connection.");
                 }
-                var response = await httpClient.GetAsync($"{_systemStateService.OrangePiIp}/api/register/?device=rescuecar-esp32", ct);
+                var response = await httpClient.GetAsync($"{_systemStateService.OrangePiIp}/api/getip/?device=rescuecar-esp32", ct);
                 if (!response.IsSuccessStatusCode)
                 {
                     Console.WriteLine("ESP32 connection failed");

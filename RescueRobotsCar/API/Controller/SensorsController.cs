@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using RescueRobotsCar.API.Models.Responses;
 using RescueRobotsCar.Driver.LineSensors;
 using RescueRobotsCar.Driver.RFID;
-using RescueRobotsCar.Driving.Sensors;
+using RescueRobotsCar.Driving;
 using RescueRobotsCar.Services;
 
 namespace RescueRobotsCar.API.Controller
@@ -12,16 +12,14 @@ namespace RescueRobotsCar.API.Controller
     public class SensorsController : ControllerBase
     {
         private readonly RFIDRC522Driver _rfidDriver;
-        private readonly Compass _compass;
         private readonly LineSensor _lineSensor;
         private readonly StatusProvider _statusProvider;
         private readonly CollectedObjectsManager _objectManager;
         private readonly LineFollower _lineFollower;
 
-        public SensorsController(RFIDRC522Driver rfiddriver, Compass compass, LineSensor lineSensor, StatusProvider statusProvider, CollectedObjectsManager objectManager, LineFollower lineFollower)
+        public SensorsController(RFIDRC522Driver rfiddriver, LineSensor lineSensor, StatusProvider statusProvider, CollectedObjectsManager objectManager, LineFollower lineFollower)
         {
             _rfidDriver = rfiddriver;
-            _compass = compass;
             _lineSensor = lineSensor;
             _statusProvider = statusProvider;
             _objectManager = objectManager;
@@ -53,27 +51,12 @@ namespace RescueRobotsCar.API.Controller
                 Settings = new LineFollowerSettings
                 { 
                     Speed = _lineFollower.Speed,
-                    TurnFactor = _lineFollower.SensorSensitivity,
-                    SteeringBoostFactor = _lineFollower.SteeringBoostFactor,
                     BackupSpeed = _lineFollower.BackupSpeed,
                     LineDetectionThreshold = _lineFollower.LineDetectionThreshold,
                     LineCenteredRange = _lineFollower.LineCenteredRange
                 }
             };
             return Ok(response);
-        }
-
-        [HttpGet("getcompassvalue")]
-        public IActionResult GetCompass()
-        {
-            return Ok(_compass.CurrentAngle);
-        }
-
-        [HttpGet("resetcompass")]
-        public IActionResult ResetCompass()
-        {
-            _compass.ResetAngle();
-            return Ok();
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿using RescueRobotsCar.Driving.Sensors;
-
-namespace RescueRobotsCar.Driving
+﻿namespace RescueRobotsCar.Driving
 {
     public class CarCoordinator
     {
@@ -14,11 +12,12 @@ namespace RescueRobotsCar.Driving
         }
 
         private readonly CarState _state;
-        private readonly Compass _compass;
+        private readonly Queue<Func<Task, CancellationToken>> _actionQueue;
 
-        public CarCoordinator(Compass compass)
+        public CarCoordinator()
         {
-            _compass = compass;
+            _state = CarState.Idle;
+            _actionQueue = new Queue<Func<Task, CancellationToken>>();
         }
 
         public void Start() 
@@ -42,6 +41,11 @@ namespace RescueRobotsCar.Driving
         }
 
         public void Reset()
+        {
+
+        }
+
+        public async Task FollowLineUntilCorner(CancellationToken ct)
         {
 
         }
